@@ -1,0 +1,154 @@
+
+/* Jirai Web App - Global Styles */
+
+/* CSS Reset */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* Root Variables */
+:root {
+  --color-bg-dark: #0F1115;
+  --color-bg-panel: #181B21;
+  --color-border: #2D313A;
+  --color-accent: #FF4F5E;
+  --color-accent-glow: rgba(255, 79, 94, 0.3);
+  --color-secondary: #4A9EFF;
+  --color-text: #E0E0E0;
+  --color-text-muted: #888888;
+}
+
+/* Custom Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #3D414A;
+}
+
+/* Body */
+body {
+  margin: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: var(--color-bg-dark);
+  color: var(--color-text);
+  overflow: hidden;
+  /* Prevent pull-to-refresh on mobile */
+  overscroll-behavior-y: contain;
+}
+
+/* Root Container */
+#root {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* --- REACT FLOW OVERRIDES --- */
+.react-flow {
+  background: transparent !important;
+  box-sizing: border-box;
+}
+.react-flow__node {
+  cursor: grab;
+}
+.react-flow__edge.selected .react-flow__edge-path {
+  stroke: var(--color-accent);
+  stroke-width: 2.5px;
+}
+.react-flow__controls {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+.react-flow__controls-button {
+  background: var(--color-bg-panel);
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text);
+  fill: var(--color-text-muted);
+}
+.react-flow__controls-button:hover {
+  background: var(--color-border);
+  fill: var(--color-text);
+}
+.react-flow__minimap {
+  border-radius: 8px;
+}
+
+/* --- GRID PATTERNS --- */
+.timeline-grid-pattern {
+  background-image: linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 320px 100%;
+  will-change: transform;
+}
+.calendar-grid-pattern {
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 250px 200px;
+  will-change: transform;
+}
+
+/* --- ANIMATIONS & UTILITIES --- */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .pt-safe {
+    padding-top: env(safe-area-inset-top);
+  }
+}
+
+/* Mobile Touch Optimizations */
+button, a, .cursor-pointer {
+  -webkit-tap-highlight-color: rgba(255, 255, 255, 0.1);
+  touch-action: manipulation;
+}
+
+/* Mobile Menu Animations */
+@keyframes slideInFromLeft {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+@keyframes slideOutToLeft {
+  from { transform: translateX(0); }
+  to { transform: translateX(-100%); }
+}
+
+.slide-in {
+  animation: slideInFromLeft 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+.slide-out {
+  animation: slideOutToLeft 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Mobile Search Overlay */
+.search-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(15, 17, 21, 0.95);
+  backdrop-filter: blur(8px);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+  padding-top: env(safe-area-inset-top);
+}
