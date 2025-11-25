@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { useStore } from '../store';
 import { useReactFlow } from 'reactflow';
@@ -40,15 +39,12 @@ export const useKeyboardShortcuts = () => {
       const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
       const cmdKey = isMac ? e.metaKey : e.ctrlKey;
 
-      // --- HELP (Cmd+/) ---
+      // --- HELP ---
       if (cmdKey && e.key === '/') {
         e.preventDefault();
         setHelpOpen(prev => !prev);
         return;
       }
-
-      // --- COMMAND PALETTE HANDLED IN COMPONENT (Cmd+K) ---
-      // We leave Cmd+K for the CommandPalette component event listener to handle globally
 
       // --- EDITING ---
       if (cmdKey && e.key.toLowerCase() === 'c') {

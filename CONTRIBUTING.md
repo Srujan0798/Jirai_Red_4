@@ -1,3 +1,4 @@
+
 # Contributing to Jirai
 
 First off, thank you for considering contributing to Jirai! It's people like you that make the open-source community such an amazing place to learn, inspire, and create.

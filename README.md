@@ -1,8 +1,9 @@
+
 # Jirai ⚓
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Version](https://img.shields.io/badge/version-1.3.0-green.svg)
-![Status](https://img.shields.io/badge/status-Beta-orange.svg)
+![Status](https://img.shields.io/badge/status-Alpha-orange.svg)
 ![Coverage](https://img.shields.io/badge/coverage-85%25-brightgreen.svg)
 
 > **AI-Powered Spatial Intelligence Workspace**  
@@ -30,7 +31,7 @@
 ### 🛠️ Power User Tools
 - **Keyboard Shortcuts**: Vim-like efficiency for navigating and editing.
 - **Search & Filter**: Real-time filtering by status, type, and content.
-- **Export/Import**: Save your workspace as JSON, or export as PNG/Markdown/TOON.
+- **Export/Import**: Save your workspace as JSON, or export as PNG/Markdown.
 - **Templates**: Built-in structures for meetings, research, and projects.
 
 ---
@@ -109,7 +110,6 @@ jirai/
 - **Zoom**: Scroll Wheel or `Ctrl +` / `Ctrl -`
 - **Select**: Click node (Hold Shift for multi-select)
 - **Context Menu**: Right-click on canvas or nodes
-- **Command Palette**: `Cmd/Ctrl + K`
 
 ### Creating Nodes
 - **Double Click** anywhere on the canvas.
@@ -132,12 +132,20 @@ jirai/
 - [x] **Phase 2: AI Integration** (Gemini Persona Agents)
 - [x] **Phase 3: View Systems** (Analysis, Timeline, Workflow)
 - [x] **Phase 4: Persistence** (Local Storage & Undo/Redo)
-- [x] **Phase 5: Mobile Optimization** (Touch gestures & Responsive UI)
-- [ ] **Phase 6: Collaboration** (Real-time multiplayer via Yjs)
-- [ ] **Phase 7: Plugin System** (Community extensions)
+- [ ] **Phase 5: Collaboration** (Real-time multiplayer via Yjs)
+- [ ] **Phase 6: Plugin System** (Community extensions)
+- [ ] **Phase 7: Native Mobile Apps** (React Native)
 
 ---
 
 ## 📄 License
 
 Distributed under the MIT License. See `LICENSE` for more information.
+
+---
+
+## 🤝 Acknowledgments
+
+- [React Flow](https://reactflow.dev/) for the amazing graph library.
+- [Google AI Studio](https://aistudio.google.com/) for the Gemini API.
+- [Lucide](https://lucide.dev/) for the beautiful icon set.

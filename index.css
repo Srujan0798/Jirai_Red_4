@@ -17,7 +17,6 @@ body {
   color: #E0E0E0;
   font-family: 'Inter', sans-serif;
   overflow: hidden;
-  overscroll-behavior: none; /* Prevent bounce on Mac/Mobile */
 }
 
 /* --- GLASSMORPHISM SYSTEM --- */
@@ -98,8 +97,7 @@ body {
 
 /* --- REACT FLOW OVERRIDES --- */
 .react-flow__node {
-  /* Removed built-in transition to let Framer Motion handle it */
-  /* transition: transform 0.3s ease-out; */ 
+  @apply transition-transform duration-300 ease-out;
 }
 .react-flow__edge-path {
   stroke-linecap: round;
@@ -131,66 +129,4 @@ body {
     linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
     linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
   background-size: 250px 200px;
-}
-
-/* --- MOBILE OPTIMIZATIONS --- */
-@media (max-width: 768px) {
-  .react-flow__node {
-    font-size: 14px;
-    min-width: 120px;
-  }
-  
-  .react-flow__controls {
-    bottom: 100px !important; /* Above assistant bar */
-    left: 16px !important;
-    margin: 0 !important;
-  }
-  
-  /* Larger touch targets for connection handles */
-  .react-flow__handle {
-    width: 16px !important;
-    height: 16px !important;
-    border-radius: 50%;
-    border: 3px solid var(--bg-void);
-  }
-  
-  /* Hide minimap on mobile to save space */
-  .react-flow__minimap {
-    display: none;
-  }
-}
-
-/* --- CMDK STYLES --- */
-[cmdk-dialog] {
-  @apply fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg bg-[#181B21] border border-[#2D313A] rounded-xl shadow-2xl z-[9999] overflow-hidden p-2;
-  animation: fade-in 0.2s ease;
-}
-
-[cmdk-overlay] {
-  @apply fixed inset-0 bg-black/60 backdrop-blur-sm z-[9998];
-  animation: fade-in 0.2s ease;
-}
-
-[cmdk-input] {
-  @apply w-full bg-transparent border-none text-white placeholder-gray-500 p-3 text-sm outline-none font-mono;
-}
-
-[cmdk-item] {
-  @apply relative flex cursor-default select-none items-center rounded-md px-2 py-2 text-sm outline-none text-gray-400 data-[selected=true]:bg-[#FF4F5E]/10 data-[selected=true]:text-white transition-colors;
-}
-
-[cmdk-item] svg {
-  @apply mr-2 h-4 w-4;
-}
-
-[cmdk-group-heading] {
-  @apply px-2 py-1.5 text-xs font-semibold text-gray-600 uppercase tracking-wider;
-}
-
-[cmdk-empty] {
-  @apply py-6 text-center text-sm text-gray-500;
-}
-
-[cmdk-separator] {
-  @apply h-px w-full bg-[#2D313A] my-1;
 }

@@ -1,6 +1,6 @@
 
+
 import React, { useEffect, useState } from 'react';
-import { ReactFlowProvider } from 'reactflow';
 import { GraphEngine } from './components/GraphEngine';
 import { AssistantBar } from './components/assistant/AssistantBar';
 import { ErrorBoundary } from './components/ErrorBoundary';
@@ -14,13 +14,8 @@ import { NodeDetailsPanel } from './components/NodeDetailsPanel';
 import { Sidebar } from './components/Sidebar';
 import { SettingsPanel } from './components/SettingsPanel';
 import { getInitialState } from './utils/initialState';
-import { useMediaQuery } from './hooks/useMediaQuery';
-import { MobileHeader } from './components/MobileHeader';
-import { MobileMenu } from './components/MobileMenu';
-import { SearchBar } from './components/SearchBar';
-import { Toaster } from './components/ui/Toaster';
 
-function AppContent() {
+function App() {
   const { currentBoard, createBoard } = useBoardStore();
   const { 
     nodes, 
@@ -48,11 +43,6 @@ function AppContent() {
   const [showTemplates, setShowTemplates] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   
-  // Mobile State
-  const isMobile = useMediaQuery('(max-width: 768px)');
-  const [isMenuOpen, setMenuOpen] = useState(false);
-  const [isSearchOpen, setSearchOpen] = useState(false);
-
   const editingNode = editingNodeId ? nodes.find(n => n.id === editingNodeId) || null : null;
 
   useEffect(() => {
@@ -66,13 +56,6 @@ function AppContent() {
     }
   }, [currentBoard, createBoard, nodes.length, setGraph]);
 
-  // Listener for TopDynamicIsland settings trigger
-  useEffect(() => {
-      const handleOpenSettings = () => setShowSettings(true);
-      window.addEventListener('open-settings', handleOpenSettings);
-      return () => window.removeEventListener('open-settings', handleOpenSettings);
-  }, []);
-
   const handleOpenExport = () => {
     setDialogTab('export');
     setShowDialog(true);
@@ -84,11 +67,11 @@ function AppContent() {
   };
   
   if (!currentBoard) return <div className="w-screen h-screen bg-[#0F1115] flex items-center justify-center text-white">Loading...</div>;
-
+  
   return (
-    <div className="w-screen h-screen bg-[#0F1115] flex flex-col overflow-hidden relative font-sans text-[#E0E0E0]">
+    <ErrorBoundary>
+      <div className="w-screen h-screen bg-[#0F1115] flex flex-col overflow-hidden relative font-sans text-[#E0E0E0]">
         
-        <Toaster /> {/* Global Notification System */}
         <OnboardingTutorial />
 
         <ExportImportDialog 
@@ -107,52 +90,33 @@ function AppContent() {
           onClose={() => setShowSettings(false)}
         />
 
-        {isMobile ? (
-          <>
-            <MobileHeader 
-              onMenuOpen={() => setMenuOpen(true)}
-              onSearchOpen={() => setSearchOpen(true)}
-              viewMode={viewMode}
-              setViewMode={setViewMode}
-            />
-            <MobileMenu 
-              isOpen={isMenuOpen}
-              onClose={() => setMenuOpen(false)}
-              onOpenImport={handleOpenImport}
-              onOpenExport={handleOpenExport}
-              onOpenSettings={() => setShowSettings(true)}
-            />
-            {isSearchOpen && <SearchBar isOverlay={true} onClose={() => setSearchOpen(false)} />}
-          </>
-        ) : (
-          <>
-            <TopDynamicIsland 
-              viewMode={viewMode}
-              setViewMode={setViewMode}
-              calendarView={calendarView}
-              setCalendarView={setCalendarView}
-              onAutoLayout={autoLayout}
-              selectedNodeIds={selectedNodeIds}
-              pastLength={past.length}
-              futureLength={future.length}
-              onUndo={undo}
-              onRedo={redo}
-              onImport={handleOpenImport}
-              onExport={handleOpenExport}
-              onDuplicate={duplicateSelectedNodes}
-              onDelete={deleteSelectedNodes}
-              onClearSelection={clearSelection}
-              onOpenTemplates={() => setShowTemplates(true)}
-            />
-            <Sidebar 
-              currentView={viewMode} 
-              onChangeView={setViewMode} 
-              onOpenSettings={() => setShowSettings(true)}
-            />
-          </>
-        )}
+        <TopDynamicIsland 
+          viewMode={viewMode}
+          setViewMode={setViewMode}
+          calendarView={calendarView}
+          setCalendarView={setCalendarView}
+          onAutoLayout={autoLayout}
+          selectedNodeIds={selectedNodeIds}
+          pastLength={past.length}
+          futureLength={future.length}
+          onUndo={undo}
+          onRedo={redo}
+          onImport={handleOpenImport}
+          onExport={handleOpenExport}
+          onDuplicate={duplicateSelectedNodes}
+          onDelete={deleteSelectedNodes}
+  
+          onClearSelection={clearSelection}
+          onOpenTemplates={() => setShowTemplates(true)}
+        />
+
+        <Sidebar 
+          currentView={viewMode} 
+          onChangeView={setViewMode} 
+          onOpenSettings={() => setShowSettings(true)}
+        />
         
-        <div id="main-canvas" className="absolute inset-0 z-0 pt-16 md:pt-0 pb-0">
+        <div className="absolute inset-0 z-0">
               <GraphEngine viewMode={viewMode} />
         </div>
         
@@ -163,16 +127,7 @@ function AppContent() {
           onClose={() => setEditingNode(null)} 
           onUpdateNode={(id, data) => updateNode(id, data)} 
         />
-    </div>
-  );
-}
-
-function App() {
-  return (
-    <ErrorBoundary>
-      <ReactFlowProvider>
-        <AppContent />
-      </ReactFlowProvider>
+      </div>
     </ErrorBoundary>
   );
 }

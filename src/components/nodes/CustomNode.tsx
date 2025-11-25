@@ -1,7 +1,6 @@
 
 import React, { memo } from 'react';
 import { Handle, Position, NodeProps, NodeResizer } from 'reactflow';
-import { motion } from 'framer-motion';
 import { BaseNode } from '../../types/node.types';
 import { useStore as useNodesStore } from '../../store';
 import { CheckSquare, Square, PlayCircle, User, Youtube, FileText, Box, StickyNote, Globe, Clock, Brain, Link as LinkIcon } from 'lucide-react';
@@ -196,13 +195,7 @@ export const CustomNode = memo(({ data, selected }: NodeProps<BaseNode>) => {
   const isResizable = selected && viewMode === 'analysis';
 
   return (
-    <motion.div
-        initial={{ scale: 0.8, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.8, opacity: 0 }}
-        transition={{ type: "spring", stiffness: 300, damping: 20 }}
-        className="w-full h-full"
-    >
+    <>
       {/* Custom Handles */}
       <Handle 
         type="target" 
@@ -230,6 +223,6 @@ export const CustomNode = memo(({ data, selected }: NodeProps<BaseNode>) => {
         position={Position.Right} 
         className="!w-2 !h-2 !bg-[#020408] !border-[2px] !border-gray-600 transition-all duration-300 opacity-0 group-hover:opacity-100 hover:!bg-[#FF4F5E] hover:!border-[#FF4F5E] hover:!w-3 hover:!h-3 hover:shadow-[0_0_10px_#FF4F5E]"
       />
-    </motion.div>
+    </>
   );
 });

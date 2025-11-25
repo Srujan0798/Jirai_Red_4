@@ -1,4 +1,3 @@
-
 export const COLORS = {
   JIRAI_DARK: '#0F1115',
   JIRAI_PANEL: '#181B21',
@@ -55,5 +54,5 @@ export const STORAGE_KEYS = {
 } as const;
 
 export const MODELS = {
-  ANALYSIS: 'gemini-2.5-flash',
+  ANALYSIS: 'gemini-2.5-flash', // Updated to supported model
 } as const;

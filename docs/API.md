@@ -1,3 +1,4 @@
+
 # Jirai API Documentation
 
 ## 🏪 Store API (Zustand)
@@ -191,4 +192,42 @@ reapplyLayout(
   viewMode: ViewMode, 
   preference?: LayoutPreference
 ): BaseNode[]
+```
+
+---
+
+## 📦 Type Definitions
+
+### BaseNode
+Core data structure for any element on the graph.
+
+```typescript
+interface BaseNode {
+  id: string;
+  type: NodeType; // 'topic' | 'task' | 'video' | 'person' ...
+  title: string;
+  description?: string;
+  visual: {
+    color?: string;
+    icon?: string;
+    shape?: 'rounded-rect' | 'circle';
+    sizeMultiplier?: number;
+    width?: number;
+    height?: number;
+  };
+  position: { x: number; y: number };
+  workflow?: {
+    start?: string; // ISO Date
+    end?: string;   // ISO Date
+    columnIndex?: number;
+  };
+  // ... specific fields (video, person, task)
+}
+```
+
+### ViewMode
+Determines the behavior of the AI and Layout Engine.
+
+```typescript
+type ViewMode = 'analysis' | 'management' | 'workflow';
 ```
