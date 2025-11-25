@@ -12,7 +12,6 @@ import ReactFlow, {
   Connection,
   OnConnectStart,
   OnConnectEnd,
-  useStoreApi,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { useNodesStore } from '../../stores/nodesStore';
@@ -33,7 +32,7 @@ const nodeTypes = {
 };
 
 function CanvasInner() {
-  const { nodes, edges, updateNode, selectNode, clearSelection, addEdge: addStoreEdge, addNode } = useNodesStore();
+  const { nodes, edges, updateNode, clearSelection, addEdge: addStoreEdge, addNode } = useNodesStore();
   const { currentBoard, setViewport, setZoom } = useBoardStore();
   const { project } = useReactFlow();
   
@@ -45,7 +44,7 @@ function CanvasInner() {
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   // --- DATA PREP ---
-  const reactFlowNodes: Node<BaseNode>[] = nodes.map(node => ({
+  const reactFlowNodes: Node<BaseNode>[] = nodes.map((node) => ({
     id: node.id,
     type: node.type,
     position: node.position,
@@ -53,7 +52,7 @@ function CanvasInner() {
   }));
 
   // --- VISIBILITY IMPROVEMENT: EDGE STYLING ---
-  const reactFlowEdges: Edge[] = edges.map(edge => ({
+  const reactFlowEdges: Edge[] = edges.map((edge) => ({
     id: edge.id,
     source: edge.from,
     target: edge.to,
@@ -69,7 +68,7 @@ function CanvasInner() {
   }));
   
   // --- HANDLERS ---
-  const onNodeDragStop = useCallback((event: React.MouseEvent, node: Node<BaseNode>) => {
+  const onNodeDragStop = useCallback((_event: React.MouseEvent, node: Node<BaseNode>) => {
     updateNode(node.id, { position: node.position });
 
     // Smart Reschedule Logic (simplified for brevity)
@@ -78,7 +77,7 @@ function CanvasInner() {
     }
   }, [updateNode, currentBoard]);
   
-  const onMove: OnMove = useCallback((evt, viewport) => {
+  const onMove: OnMove = useCallback((_evt, viewport) => {
     setViewport(viewport.x, viewport.y);
     setZoom(viewport.zoom);
     setTransform(viewport);

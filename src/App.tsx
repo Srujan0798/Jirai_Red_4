@@ -1,6 +1,6 @@
 
 
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { GraphEngine } from './components/GraphEngine';
 import { AssistantBar } from './components/assistant/AssistantBar';
 import { ErrorBoundary } from './components/ErrorBoundary';

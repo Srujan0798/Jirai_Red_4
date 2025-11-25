@@ -36,10 +36,11 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({ isOpen, onCl
   const categories = ['all', 'productivity', 'planning', 'research', 'personal', 'custom'];
 
   const handleUseTemplate = (template: NodeTemplate) => {
+    const randomOffset = 200;
     const newNode: BaseNode = {
       ...template.data as BaseNode,
       id: `node-${Date.now()}`,
-      position: { x: Math.random() * 200, y: Math.random() * 200 }, // Randomize slightly or center
+      position: { x: Math.floor(Math.random() * randomOffset), y: Math.floor(Math.random() * randomOffset) },
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };

@@ -1,6 +1,6 @@
 
 import { create } from 'zustand';
-import { Board, ViewMode } from '../../types/board.types';
+import { Board, ViewMode } from '../types/board.types';
 
 interface BoardState {
   currentBoard: Board | null;

@@ -52,7 +52,7 @@ export const NodeDetailsPanel: React.FC<NodeDetailsProps> = ({ node, onClose, on
 
   const removeResource = (resId: string) => {
       if(!node) return;
-      const updated = (node.resources || []).filter(r => r.id !== resId);
+      const updated = (node.resources || []).filter((r) => r.id !== resId);
       onUpdateNode(node.id, { resources: updated });
   };
 
@@ -393,7 +393,7 @@ export const NodeDetailsPanel: React.FC<NodeDetailsProps> = ({ node, onClose, on
                         <p className="text-center text-gray-600 text-xs py-4 italic">No resources yet.</p>
                     )}
                     
-                    {node.resources?.map(res => (
+                    {node.resources?.map((res) => (
                         <div key={res.id} className="bg-gray-800/50 rounded border border-gray-700 overflow-hidden group">
                             <div className="flex items-center justify-between p-2 bg-black/20">
                                 <div className="flex items-center gap-2 overflow-hidden">
@@ -440,7 +440,7 @@ export const NodeDetailsPanel: React.FC<NodeDetailsProps> = ({ node, onClose, on
                             <p className="text-gray-600 text-xs">Start the discussion...</p>
                         </div>
                     )}
-                    {node.comments?.map(c => (
+                    {node.comments?.map((c) => (
                         <div key={c.id} className={`flex flex-col ${c.userId === 'curr-user' ? 'items-end' : 'items-start'}`}>
                             <div className={`max-w-[85%] p-2 rounded-lg text-xs ${
                                 c.userId === 'curr-user' 

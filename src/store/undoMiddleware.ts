@@ -25,7 +25,7 @@ type UndoRedo = <
 
 export const undoMiddleware: UndoRedo = (config, options = {}) => (set, get, api) => {
   const limit = options.limit || 50;
-  const exclude = options.exclude || [];
+
   const debounce = options.debounce || 300;
 
   let past: any[] = [];
@@ -71,10 +71,15 @@ export const undoMiddleware: UndoRedo = (config, options = {}) => (set, get, api
   };
 
   // Monkey patch the API to expose history
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (api as any).undo = undo;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (api as any).redo = redo;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (api as any).clearHistory = clearHistory;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (api as any).getPastStates = () => past;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (api as any).getFutureStates = () => future;
 
   // FIX: Using a rest parameter `...args` is more robust for middleware that wraps `set`.

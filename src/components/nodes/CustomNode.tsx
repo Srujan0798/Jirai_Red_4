@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import { memo } from 'react';
 import { Handle, Position, NodeProps, NodeResizer } from 'reactflow';
 import { BaseNode } from '../../types/node.types';
 import { useStore as useNodesStore } from '../../store';
@@ -31,7 +31,7 @@ const NodeContent = ({ data, selected }: { data: BaseNode; selected: boolean }) 
              <div className="w-full h-1 bg-gray-700 rounded-full mt-auto overflow-hidden">
                  <div 
                     className={`h-full rounded-full ${isDone ? 'bg-emerald-500' : 'bg-blue-500'}`} 
-                    style={{ width: isDone ? '100%' : `${Math.random() * 60 + 10}%` }} 
+                    style={{ width: isDone ? '100%' : '60%' }}
                  />
              </div>
         </div>

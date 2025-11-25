@@ -1,9 +1,10 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import { BaseNode, BaseEdge, ViewMode, LayoutPreference } from "../types";
+import { BaseNode, BaseEdge, ViewMode } from "../types";
 import { MODELS, LIMITS, COLORS, SIZES } from "../constants";
 
 // Initialize Gemini
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+const apiKey = process.env['API_KEY'] || '';
+const ai = new GoogleGenAI({ apiKey });
 
 // Interfaces for the raw AI response to avoid 'any'
 interface RawAINode {
@@ -14,9 +15,21 @@ interface RawAINode {
   status?: string;
   tags?: string[];
   workflow?: { start?: string; end?: string };
-  video?: any;
-  person?: any;
-  task?: any;
+  video?: {
+      url?: string;
+      thumbnailUrl?: string;
+      durationSeconds?: number;
+      platform?: "youtube" | "vimeo" | "custom";
+      videoId?: string;
+  };
+  person?: {
+      role?: string;
+      email?: string;
+      avatar?: string;
+  };
+  task?: {
+      priority?: string;
+  };
 }
 
 interface RawAIEdge {
@@ -57,7 +70,7 @@ const applyOrganicLayout = (nodes: BaseNode[], edges: BaseEdge[]): BaseNode[] =>
 
     const incoming = new Set(edges.map(e => e.to));
     let roots = nodes.filter(n => !incoming.has(n.id));
-    if (roots.length === 0) roots = [nodes[0]];
+    if (roots.length === 0) roots = [nodes[0] as BaseNode];
 
     const levels: Record<string, number> = {};
     const queue: { id: string, level: number }[] = roots.map(r => ({ id: r.id, level: 0 }));
@@ -90,7 +103,7 @@ const applyOrganicLayout = (nodes: BaseNode[], edges: BaseEdge[]): BaseNode[] =>
     Object.entries(levels).forEach(([nodeId, level]) => {
         if (!nodesByLevel[level as unknown as number]) nodesByLevel[level as unknown as number] = [];
         const node = nodes.find(n => n.id === nodeId);
-        if (node) nodesByLevel[level as unknown as number].push(node);
+        if (node) (nodesByLevel[level as unknown as number] as BaseNode[]).push(node);
     });
 
     const centerX = 0;
@@ -216,7 +229,7 @@ const applyCalendarLayout = (nodes: BaseNode[]): BaseNode[] => {
     return nodes;
 }
 
-export const reapplyLayout = (nodes: BaseNode[], edges: BaseEdge[], viewMode: ViewMode, preference: LayoutPreference = 'ORGANIC'): BaseNode[] => {
+export const reapplyLayout = (nodes: BaseNode[], edges: BaseEdge[], viewMode: ViewMode): BaseNode[] => {
     const newNodes = JSON.parse(JSON.stringify(nodes)) as BaseNode[];
 
     if (viewMode === 'management') {
@@ -380,9 +393,15 @@ export const generateAnalysisFromPrompt = async (prompt: string, currentNodes: B
           shape: 'rounded-rect'
       },
       workflow: n.workflow || {},
-      video: n.video,
+      video: n.video ? {
+        platform: n.video.platform || 'custom',
+        videoId: n.video.videoId || '',
+        url: n.video.url || '',
+        thumbnailUrl: n.video.thumbnailUrl,
+        durationSeconds: n.video.durationSeconds
+      } : undefined,
       person: n.person,
-      task: n.task,
+      task: n.task ? { ...n.task, priority: n.task.priority as any } : undefined,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       createdBy: 'ai'

@@ -7,6 +7,7 @@ export interface ImportResult {
   edges: BaseEdge[];
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const validateWorkspaceJSON = (data: any): boolean => {
   if (!data || typeof data !== 'object') return false;
   if (!Array.isArray(data.nodes) || !Array.isArray(data.edges)) return false;
@@ -18,7 +19,7 @@ export const importFromJSON = async (file: File): Promise<ImportResult> => {
   let data;
   try {
     data = JSON.parse(content);
-  } catch (e) {
+  } catch {
     throw new Error('Invalid JSON file');
   }
 

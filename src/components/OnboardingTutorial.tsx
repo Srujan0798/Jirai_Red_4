@@ -58,6 +58,8 @@ export const OnboardingTutorial: React.FC = () => {
 
   const step = STEPS[currentStep];
 
+  if (!step) return null;
+
   return (
     <div className="fixed inset-0 z-[100] pointer-events-none">
       {/* Backdrop with cutout effect simulation (simplified as dark overlay) */}

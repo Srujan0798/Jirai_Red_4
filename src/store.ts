@@ -52,9 +52,9 @@ interface AppState {
   autoLayout: () => void;
   setLayoutPreference: (pref: LayoutPreference) => void;
   addEdge: (edge: BaseEdge) => void;
-  addEdges: (edges: BaseEdge[]) => void;
   addNode: (node: BaseNode) => void;
   addNodes: (nodes: BaseNode[]) => void;
+  addEdges: (edges: BaseEdge[]) => void;
   deleteSelectedNodes: () => void;
   duplicateSelectedNodes: () => void;
   copySelectedNodes: () => void;
@@ -77,8 +77,8 @@ const generateId = () => {
 };
 
 const createHistoryEntry = (nodes: BaseNode[], edges: BaseEdge[]): HistoryState => ({
-  nodes: JSON.parse(JSON.stringify(nodes)) as BaseNode[],
-  edges: JSON.parse(JSON.stringify(edges)) as BaseEdge[],
+  nodes: JSON.parse(JSON.stringify(nodes)),
+  edges: JSON.parse(JSON.stringify(edges)),
 });
 
 const withHistory = <T extends AppState>(fn: (state: T) => Partial<T>, set: (partial: Partial<T> | ((state: T) => Partial<T>)) => void, get: () => T) => {
@@ -117,74 +117,68 @@ export const useStore = create<AppState>()(
         },
 
         onNodesChange: (changes: NodeChange[]) => {
-          set((state) => {
-              const rfNodes = state.nodes.map(n => ({
-                  id: n.id,
-                  type: n.type,
-                  position: n.position,
-                  data: n,
-                  selected: state.selectedNodeIds.includes(n.id),
-                  width: n.visual.width,
-                  height: n.visual.height,
-                  style: { width: n.visual.width, height: n.visual.height }
-              }));
+          const isHistoryChange = changes.some(c =>
+            (c.type === 'position' && !c.dragging) || c.type === 'remove' || c.type === 'dimensions'
+          );
 
-              const nextRfNodes = applyNodeChanges(changes, rfNodes);
+          const updater = (state: AppState): Partial<AppState> => {
+            const rfNodes = state.nodes.map(n => ({
+              id: n.id,
+              data: n,
+              position: n.position,
+              type: n.type,
+              // Important: pass visual dims to ReactFlow
+              width: n.visual.width,
+              height: n.visual.height,
+              selected: state.selectedNodeIds.includes(n.id),
+            }));
 
-              const selectionChange = changes.find(c => c.type === 'select');
-              let nextSelectedIds = state.selectedNodeIds;
-              if (selectionChange) {
-                  nextSelectedIds = nextRfNodes.filter(n => n.selected).map(n => n.id);
-              }
+            const nextRfNodes = applyNodeChanges(changes, rfNodes);
 
-              const nextNodes = state.nodes.map(node => {
-                  const updated = nextRfNodes.find(rn => rn.id === node.id);
-                  if (updated) {
-                      const newWidth = updated.width;
-                      const newHeight = updated.height;
-                      // Explicit null checks for dimensions
-                      const hasDimensionChange = (newWidth != null && newWidth !== node.visual.width) || (newHeight != null && newHeight !== node.visual.height);
-                      const hasPositionChange = updated.position.x !== node.position.x || updated.position.y !== node.position.y;
+            const nextNodes = state.nodes
+              .map(n => {
+                const rfNode = nextRfNodes.find(rn => rn.id === n.id);
+                if (!rfNode) return null;
 
-                      if (hasPositionChange || hasDimensionChange) {
-                          const visualUpdate: Partial<NodeVisual> = {};
-                          if (newWidth != null) visualUpdate.width = newWidth;
-                          if (newHeight != null) visualUpdate.height = newHeight;
+                // Sync back dimensions if React Flow updates them
+                const visualUpdate: Partial<NodeVisual> = {};
+                if (rfNode.width != null) visualUpdate.width = rfNode.width;
+                if (rfNode.height != null) visualUpdate.height = rfNode.height;
 
-                          return { 
-                              ...node, 
-                              position: updated.position,
-                              visual: { ...node.visual, ...visualUpdate }
-                          };
-                      }
-                  }
-                  return updated ? { ...node, ...updated.data, position: updated.position } : null; 
-              }).filter((n): n is BaseNode => n !== null);
-              
-              const finalNodes = nextNodes.filter(n => nextRfNodes.some(rn => rn.id === n.id));
+                return {
+                  ...n,
+                  position: rfNode.position,
+                  visual: { ...n.visual, ...visualUpdate },
+                };
+              })
+              .filter((n): n is BaseNode => n !== null);
 
-              if (changes.some(c => c.type === 'remove')) {
-                  if (state.nodes.length !== finalNodes.length) {
-                       withHistory(() => ({ nodes: finalNodes, selectedNodeIds: [] }), set, get);
-                       return { nodes: finalNodes, selectedNodeIds: [] };
-                  }
-              }
+            const nextSelectedIds = nextRfNodes.filter(n => n.selected).map(n => n.id);
 
-              return { nodes: finalNodes, selectedNodeIds: nextSelectedIds };
-          });
+            return { nodes: nextNodes, selectedNodeIds: nextSelectedIds };
+          };
+
+          if (isHistoryChange) {
+            withHistory(updater, set, get);
+          } else {
+            set(updater);
+          }
         },
 
         onEdgesChange: (changes: EdgeChange[]) => {
-            set((state) => {
-                const rfEdges = state.edges.map(e => ({ id: e.id, source: e.from, target: e.to }));
+            withHistory(state => {
+                const rfEdges = state.edges.map(e => ({
+                    id: e.id,
+                    source: e.from,
+                    target: e.to,
+                }));
                 const nextRfEdges = applyEdgeChanges(changes, rfEdges);
-                const nextEdges = state.edges.filter(e => nextRfEdges.some(re => re.id === e.id));
-                if (changes.some(c => c.type === 'remove') && state.edges.length !== nextEdges.length) {
-                   withHistory(() => ({ edges: nextEdges }), set, get);
-                   return { edges: nextEdges };
-                }
-                return { edges: nextEdges };
-            });
+                const nextEdgeIds = new Set(nextRfEdges.map(e => e.id));
+
+                return {
+                    edges: state.edges.filter(e => nextEdgeIds.has(e.id))
+                };
+            }, set, get);
         },
 
         onConnect: (connection: Connection) => {
@@ -207,37 +201,39 @@ export const useStore = create<AppState>()(
         }), set, get),
 
         setViewMode: (mode) => {
-            const { nodes, edges, layoutPreference } = get();
-            const layoutNodes = reapplyLayout(nodes, edges, mode, layoutPreference);
+            const { nodes, edges } = get();
+            // Recalculate layout whenever mode changes
+            const layoutNodes = reapplyLayout(nodes, edges, mode);
             set({ viewMode: mode, nodes: layoutNodes });
         },
 
         setCalendarView: (view) => set({ calendarView: view }),
 
         autoLayout: () => withHistory((state) => {
-          const layoutNodes = reapplyLayout(state.nodes, state.edges, state.viewMode, state.layoutPreference);
+          const layoutNodes = reapplyLayout(state.nodes, state.edges, state.viewMode);
           return { nodes: layoutNodes };
         }, set, get),
 
         setLayoutPreference: (pref) => {
             const { nodes, edges, viewMode } = get();
-            const layoutNodes = reapplyLayout(nodes, edges, viewMode, pref);
+            const layoutNodes = reapplyLayout(nodes, edges, viewMode);
             set({ layoutPreference: pref, nodes: layoutNodes });
         },
 
         addEdge: (edge) => withHistory((state) => ({ edges: [...state.edges, edge] }), set, get),
-        
-        addEdges: (edges) => withHistory((state) => ({ edges: [...state.edges, ...edges] }), set, get),
 
         addNode: (node) => withHistory((state) => ({
           nodes: [...state.nodes, node],
           editingNodeId: node.id,
           selectedNodeIds: [node.id]
         }), set, get),
-        
-        addNodes: (nodes) => withHistory((state) => ({
-          nodes: [...state.nodes, ...nodes],
-          // Optional: Select the new nodes? Keeping it simple for now.
+
+        addNodes: (newNodes) => withHistory((state) => ({
+          nodes: [...state.nodes, ...newNodes]
+        }), set, get),
+
+        addEdges: (newEdges) => withHistory((state) => ({
+          edges: [...state.edges, ...newEdges]
         }), set, get),
 
         deleteSelectedNodes: () => {
@@ -259,7 +255,7 @@ export const useStore = create<AppState>()(
           withHistory((state) => {
             const selected = state.nodes.filter(n => state.selectedNodeIds.includes(n.id));
             const newNodes = selected.map(n => ({
-                ...JSON.parse(JSON.stringify(n)) as BaseNode,
+                ...JSON.parse(JSON.stringify(n)),
                 id: generateId(),
                 position: { x: n.position.x + 50, y: n.position.y + 50 },
                 title: `${n.title} (Copy)`
@@ -273,7 +269,7 @@ export const useStore = create<AppState>()(
 
         copySelectedNodes: () => set((state) => {
             const selected = state.nodes.filter(n => state.selectedNodeIds.includes(n.id));
-            return { clipboard: JSON.parse(JSON.stringify(selected)) as BaseNode[] };
+            return { clipboard: JSON.parse(JSON.stringify(selected)) };
         }),
 
         cutSelectedNodes: () => {
@@ -283,7 +279,7 @@ export const useStore = create<AppState>()(
                 const newNodes = state.nodes.filter(n => !state.selectedNodeIds.includes(n.id));
                 const newEdges = state.edges.filter(e => !state.selectedNodeIds.includes(e.from) && !state.selectedNodeIds.includes(e.to));
                 return {
-                    clipboard: JSON.parse(JSON.stringify(selected)) as BaseNode[],
+                    clipboard: JSON.parse(JSON.stringify(selected)),
                     nodes: newNodes,
                     edges: newEdges,
                     selectedNodeIds: []
@@ -295,7 +291,7 @@ export const useStore = create<AppState>()(
             if (get().clipboard.length === 0) return;
             withHistory((state) => {
               const newNodes = state.clipboard.map((n, i) => ({
-                  ...JSON.parse(JSON.stringify(n)) as BaseNode,
+                  ...JSON.parse(JSON.stringify(n)),
                   id: generateId(),
                   position: position ? { x: position.x + i*10, y: position.y + i*10 } : { x: n.position.x + 50, y: n.position.y + 50 },
               }));

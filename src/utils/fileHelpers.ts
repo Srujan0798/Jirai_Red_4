@@ -2,6 +2,7 @@
 import FileSaver from 'file-saver';
 
 export const downloadFile = (content: string | Blob, filename: string) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const saveAs = (FileSaver as any).saveAs || FileSaver;
   saveAs(content, filename);
 };

@@ -1,8 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Search, X, Filter, ChevronDown } from 'lucide-react';
+import { Search, X, Filter } from 'lucide-react';
 import { useSearch, FilterStatus, FilterType } from '../hooks/useSearch';
-import { NodeType } from '../types';
 
 export const SearchBar: React.FC = () => {
   const { 

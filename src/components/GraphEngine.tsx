@@ -52,7 +52,7 @@ const GraphEngineInner: React.FC<GraphEngineProps> = ({ viewMode }) => {
   } = useNodesStore();
 
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
-  const { project, fitView } = useReactFlow();
+  const { project } = useReactFlow();
 
   // Initialize Keyboard Shortcuts
   const { isHelpOpen, toggleHelp } = useKeyboardShortcuts();
@@ -78,7 +78,7 @@ const GraphEngineInner: React.FC<GraphEngineProps> = ({ viewMode }) => {
       return () => clearInterval(interval);
   }, []);
 
-  const rfNodes: Node<BaseNode>[] = useMemo(() => nodes.map(n => ({
+  const rfNodes: Node<BaseNode>[] = useMemo(() => nodes.map((n) => ({
     id: n.id,
     type: n.type,
     position: n.position,
@@ -88,7 +88,7 @@ const GraphEngineInner: React.FC<GraphEngineProps> = ({ viewMode }) => {
     draggable: true, 
   })), [nodes, viewMode]);
 
-  const rfEdges: Edge[] = useMemo(() => edges.map(e => ({
+  const rfEdges: Edge[] = useMemo(() => edges.map((e) => ({
     id: e.id,
     source: e.from,
     target: e.to,
@@ -116,7 +116,7 @@ const GraphEngineInner: React.FC<GraphEngineProps> = ({ viewMode }) => {
     setContextMenu(null);
   }, [clearSelection]);
 
-  const onMove: OnMove = useCallback((evt, viewport) => {
+  const onMove: OnMove = useCallback((_evt, viewport) => {
     setTransform(viewport);
   }, []);
 

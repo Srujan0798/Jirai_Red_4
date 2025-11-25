@@ -1,6 +1,6 @@
 
 import React, { useState, useRef } from 'react';
-import { X, Download, Upload, FileJson, Image, FileText, Check, AlertCircle } from 'lucide-react';
+import { X, Upload, FileJson, Image, FileText, Check, AlertCircle } from 'lucide-react';
 import { useStore } from '../store';
 import { exportToJSON, exportToPNG, exportToMarkdown } from '../utils/export';
 import { importFromJSON } from '../utils/import';
@@ -14,7 +14,7 @@ interface ExportImportDialogProps {
 export const ExportImportDialog: React.FC<ExportImportDialogProps> = ({ isOpen, onClose, initialTab = 'export' }) => {
   const [activeTab, setActiveTab] = useState<'export' | 'import'>(initialTab);
   const { nodes, edges, selectedNodeIds, setGraph } = useStore();
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [isProcessing_unused, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);

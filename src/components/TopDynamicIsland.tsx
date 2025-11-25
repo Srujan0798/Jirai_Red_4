@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Undo2, Redo2, Upload, Download, Plus, CalendarRange, CalendarDays, LayoutTemplate, Trash2, Copy } from 'lucide-react';
+import { Undo2, Redo2, Upload, Download, CalendarRange, CalendarDays, LayoutTemplate, Trash2, Copy } from 'lucide-react';
 import { ViewMode, CalendarView } from '../types';
 import { SearchBar } from './SearchBar';
 
@@ -36,7 +36,6 @@ export const TopDynamicIsland: React.FC<TopDynamicIslandProps> = ({
     onExport,
     onDuplicate,
     onDelete,
-    onClearSelection,
     onOpenTemplates
 }) => {
     const hasSelection = selectedNodeIds.length > 0;

@@ -1,27 +1,24 @@
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useStore } from '../store';
-import { BaseNode } from '../types';
 
 export type FilterStatus = 'all' | 'todo' | 'in-progress' | 'done' | 'blocked';
 export type FilterType = 'all' | 'task' | 'topic' | 'video' | 'person' | 'project';
 
 export const useSearch = () => {
-  const { nodes, selectNode, setViewMode } = useStore();
+  const { nodes, selectNode } = useStore();
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<FilterStatus>('all');
   const [typeFilter, setTypeFilter] = useState<FilterType>('all');
-  const [results, setResults] = useState<BaseNode[]>([]);
 
-  useEffect(() => {
+  const results = useMemo(() => {
     if (!query && statusFilter === 'all' && typeFilter === 'all') {
-      setResults([]);
-      return;
+      return [];
     }
 
     const lowerQuery = query.toLowerCase();
     
-    const filtered = nodes.filter(node => {
+    return nodes.filter(node => {
       const matchesQuery = !query || 
         node.title.toLowerCase().includes(lowerQuery) ||
         node.description?.toLowerCase().includes(lowerQuery) ||
@@ -32,8 +29,6 @@ export const useSearch = () => {
 
       return matchesQuery && matchesStatus && matchesType;
     });
-
-    setResults(filtered);
   }, [query, statusFilter, typeFilter, nodes]);
 
   const focusResult = (nodeId: string) => {

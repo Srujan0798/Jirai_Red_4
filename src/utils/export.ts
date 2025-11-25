@@ -47,7 +47,7 @@ export const exportToMarkdown = (nodes: BaseNode[]) => {
     md += `${indent}- ${checkbox}**${node.title}**${tags}\n`;
     if (node.description) md += `${indent}  > ${node.description}\n`;
     if (node.resources) {
-      node.resources.forEach(res => {
+      node.resources.forEach((res) => {
         md += `${indent}  - [${res.title}](${res.url})\n`;
       });
     }

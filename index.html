@@ -5,74 +5,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Jirai - AI Workspace</title>
-    <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Patrick+Hand&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reactflow@11.10.1/dist/style.css" />
-    <link rel="stylesheet" href="index.css" />
-    <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            fontFamily: {
-              sans: ['Inter', 'sans-serif'],
-              mono: ['JetBrains Mono', 'monospace'],
-              hand: ['Patrick Hand', 'cursive'],
-            },
-            colors: {
-              jirai: {
-                dark: '#0F1115',
-                panel: '#181B21',
-                border: '#2D313A',
-                accent: '#FF4F5E', // A distinct "Jirai" red/pink
-                secondary: '#4A9EFF',
-                text: '#E0E0E0',
-                muted: '#888888'
-              }
-            },
-            boxShadow: {
-              'glow': '0 0 20px rgba(255, 79, 94, 0.3)',
-            }
-          }
-        }
-      }
-    </script>
-    <style>
-      .grid-bg {
-        background-size: 40px 40px;
-        background-image: radial-gradient(circle, #2D313A 1px, transparent 1px);
-      }
-      .timeline-bg {
-        background-image: linear-gradient(to right, #2D313A 1px, transparent 1px);
-        background-size: 120px 100%;
-      }
-    </style>
-  <script type="importmap">
-{
-  "imports": {
-    "react/": "https://aistudiocdn.com/react@^19.2.0/",
-    "react": "https://aistudiocdn.com/react@^19.2.0",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
-    "react-dom": "https://aistudiocdn.com/react-dom@^19.2.0",
-    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.554.0",
-    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.30.0",
-    "zustand": "https://esm.sh/zustand@4.5.0?external=react",
-    "zustand/middleware": "https://esm.sh/zustand@4.5.0/middleware?external=react",
-    "date-fns": "https://aistudiocdn.com/date-fns@^4.1.0",
-    "reactflow": "https://esm.sh/reactflow@11.10.1?external=react,react-dom",
-    "zustand/": "https://aistudiocdn.com/zustand@^5.0.8/",
-    "reactflow/": "https://aistudiocdn.com/reactflow@^11.11.4/",
-    "html-to-image": "https://esm.sh/html-to-image@1.11.11",
-    "file-saver": "https://esm.sh/file-saver@2.0.5",
-    "vitest": "https://aistudiocdn.com/vitest@^4.0.12",
-    "vitest/": "https://aistudiocdn.com/vitest@^4.0.12/",
-    "@vitejs/plugin-react": "https://aistudiocdn.com/@vitejs/plugin-react@^5.1.1",
-    "@playwright/test": "https://aistudiocdn.com/@playwright/test@^1.56.1",
-    "@testing-library/react": "https://aistudiocdn.com/@testing-library/react@^16.3.0",
-    "@testing-library/jest-dom": "https://aistudiocdn.com/@testing-library/jest-dom@^6.9.1"
-  }
-}
-</script>
-</head>
+  </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/index.tsx"></script>
