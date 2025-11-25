@@ -1,8 +1,9 @@
 
-import React from 'react';
-import { Undo2, Redo2, Upload, Download, CalendarRange, CalendarDays, LayoutTemplate, Trash2, Copy } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Undo2, Redo2, Upload, Download, CalendarRange, CalendarDays, LayoutTemplate, Trash2, Copy, Settings, User, LogOut, ChevronDown } from 'lucide-react';
 import { ViewMode, CalendarView } from '../types';
 import { SearchBar } from './SearchBar';
+import { useUserStore } from '../stores/userStore';
 
 interface TopDynamicIslandProps {
     viewMode: ViewMode;
@@ -36,88 +37,149 @@ export const TopDynamicIsland: React.FC<TopDynamicIslandProps> = ({
     onExport,
     onDuplicate,
     onDelete,
+    onClearSelection,
     onOpenTemplates
 }) => {
     const hasSelection = selectedNodeIds.length > 0;
+    const { profile } = useUserStore();
+    const [isProfileOpen, setProfileOpen] = useState(false);
+    const profileRef = useRef<HTMLDivElement>(null);
 
-    const IconBtn = ({ onClick, icon: Icon, disabled, title, danger }: any) => (
-        <button 
-            onClick={onClick} 
-            disabled={disabled} 
-            title={title}
-            className={`p-2.5 rounded-xl transition-all duration-200 glass-button
-                ${disabled ? 'opacity-30 cursor-not-allowed' : 'hover:bg-white/10'}
-                ${danger ? 'text-red-400 hover:text-red-300' : 'text-gray-400 hover:text-white'}
-            `}
-        >
-            <Icon size={18} strokeWidth={2} />
-        </button>
-    );
+    // Close profile dropdown on click outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
+                setProfileOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    // Re-trigger settings event for app to catch
+    const openSettings = () => {
+        const event = new CustomEvent('open-settings');
+        window.dispatchEvent(event);
+        setProfileOpen(false);
+    };
 
     return (
         <>
-            {/* === LEFT: BRAND & SEARCH === */}
-            <div className="fixed top-6 left-6 z-50 flex items-start gap-4 pointer-events-none">
-                <div className="pointer-events-auto glass-panel rounded-2xl p-1.5 pr-5 flex items-center gap-3 group cursor-pointer transition-all hover:border-white/20 hidden sm:flex">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#FF4F5E] to-[#D63F4C] flex items-center justify-center shadow-lg shadow-red-900/20 text-white font-bold text-xl group-hover:rotate-6 transition-transform duration-500">
-                        <span>J</span>
-                    </div>
-                    <div className="flex flex-col">
-                        <span className="font-bold text-white text-sm leading-none tracking-wide group-hover:text-glow transition-all">Jirai</span>
-                        <span className="text-[10px] text-gray-500 font-mono mt-1">v2.0</span>
+            {/* === ZONE 1: BRAND & SEARCH (TOP LEFT) === */}
+            <div className="fixed top-6 left-6 z-50 pointer-events-none select-none flex items-center gap-3">
+                <div className="pointer-events-auto bg-[#181B21]/90 backdrop-blur-xl border border-[#2D313A]/80 shadow-2xl rounded-2xl p-3 flex items-center gap-3 transition-transform hover:scale-105 hover:border-[#FF4F5E]/20 group hidden sm:flex">
+                    <div className="text-2xl transform group-hover:rotate-12 transition-transform duration-300 filter drop-shadow-lg">⚓</div>
+                    <div className="flex flex-col leading-none">
+                        <span className="font-bold text-white text-sm tracking-tight">Jirai</span>
+                        <span className="text-[9px] text-gray-500 font-mono">v1.3</span>
                     </div>
                 </div>
-                
-                <div className="pointer-events-auto shadow-2xl">
+                <div className="pointer-events-auto">
                     <SearchBar />
                 </div>
             </div>
 
-            {/* === CENTER: CONTEXT ACTIONS === */}
-            <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 pointer-events-none flex flex-col items-center gap-3">
-                {/* Calendar View Toggles */}
-                {viewMode === 'workflow' && setCalendarView && (
-                    <div className="pointer-events-auto glass-panel rounded-full p-1 flex items-center gap-1">
-                        {(['WEEK', 'MONTH'] as const).map((view) => (
+            {/* === ZONE 2: MODE & CONTEXT TOOLS (TOP CENTER) === */}
+            <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 pointer-events-none">
+                <div className="pointer-events-auto bg-[#181B21]/90 backdrop-blur-xl border border-[#2D313A]/80 shadow-2xl rounded-2xl p-1.5 flex items-center gap-2 transition-all hover:border-[#FF4F5E]/20">
+                    
+                    {/* Calendar Controls */}
+                    {viewMode === 'workflow' && setCalendarView && (
+                        <div className="flex bg-black/40 rounded-xl p-1">
                             <button 
-                                key={view}
-                                onClick={() => setCalendarView(view)}
-                                className={`px-4 py-1.5 rounded-full text-[10px] font-bold tracking-wider transition-all duration-300 ${
-                                    calendarView === view 
-                                    ? 'bg-[#FF4F5E] text-white shadow-[0_0_15px_rgba(255,79,94,0.4)]' 
-                                    : 'text-gray-400 hover:text-white hover:bg-white/5'
-                                }`}
+                                onClick={() => setCalendarView('WEEK')}
+                                className={`p-2 rounded-lg transition-all ${calendarView === 'WEEK' ? 'bg-[#FF4F5E] text-white shadow-lg' : 'text-gray-500 hover:text-gray-300'}`}
+                                title="Week View"
                             >
-                                {view}
+                                <CalendarRange size={16} />
                             </button>
-                        ))}
-                    </div>
-                )}
-                
-                {/* Selection Toolbar */}
-                {hasSelection && (
-                    <div className="pointer-events-auto glass-panel rounded-2xl p-1.5 flex items-center gap-1 animate-in slide-in-from-top-4 duration-300">
-                         <div className="px-3 flex flex-col border-r border-white/10 mr-1">
-                            <span className="text-[9px] text-gray-500 font-mono uppercase">Selected</span>
-                            <span className="text-xs font-bold text-white">{selectedNodeIds.length} Nodes</span>
-                         </div>
-                         <IconBtn onClick={onDuplicate} icon={Copy} title="Duplicate" />
-                         <IconBtn onClick={onDelete} icon={Trash2} title="Delete" danger />
-                    </div>
-                )}
+                            <button 
+                                onClick={() => setCalendarView('MONTH')}
+                                className={`p-2 rounded-lg transition-all ${calendarView === 'MONTH' ? 'bg-[#FF4F5E] text-white shadow-lg' : 'text-gray-500 hover:text-gray-300'}`}
+                                title="Month View"
+                            >
+                                <CalendarDays size={16} />
+                            </button>
+                        </div>
+                    )}
+                    
+                    {/* Selection Controls */}
+                    {hasSelection && (
+                        <div className="flex items-center gap-1 animate-in fade-in duration-300">
+                             <div className="text-xs font-mono text-gray-500 px-2">{selectedNodeIds.length} selected</div>
+                             <div className="h-6 w-px bg-[#2D313A]" />
+                             <button onClick={onDuplicate} className="p-2.5 text-gray-400 hover:text-white hover:bg-white/10 rounded-xl transition-colors" title="Duplicate">
+                                <Copy size={16} />
+                             </button>
+                             <button onClick={onDelete} className="p-2.5 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-colors" title="Delete">
+                                <Trash2 size={16} />
+                             </button>
+                        </div>
+                    )}
+
+                </div>
             </div>
 
-            {/* === RIGHT: GLOBAL TOOLS === */}
-            <div className="fixed top-6 right-6 z-50 pointer-events-none hidden sm:block">
-                <div className="pointer-events-auto glass-panel rounded-2xl p-1.5 flex items-center gap-1">
-                    <IconBtn onClick={onUndo} disabled={pastLength === 0} icon={Undo2} title="Undo" />
-                    <IconBtn onClick={onRedo} disabled={futureLength === 0} icon={Redo2} title="Redo" />
-                    
-                    <div className="w-px h-6 bg-white/10 mx-1" />
-                    
-                    <IconBtn onClick={onOpenTemplates} icon={LayoutTemplate} title="Templates" />
-                    <IconBtn onClick={onImport} icon={Upload} title="Import" />
-                    <IconBtn onClick={onExport} icon={Download} title="Export" />
+            {/* === ZONE 3: PROFILE & GLOBAL TOOLS (TOP RIGHT) === */}
+            <div className="fixed top-6 right-6 z-50 pointer-events-none flex gap-3">
+                <div className="pointer-events-auto bg-[#181B21]/90 backdrop-blur-xl border border-[#2D313A]/80 shadow-2xl rounded-2xl p-1.5 flex items-center gap-1 transition-all hover:border-[#FF4F5E]/20">
+                    <button onClick={onUndo} disabled={pastLength === 0} className="p-2.5 text-gray-400 hover:text-white hover:bg-white/10 rounded-xl disabled:opacity-30 transition-colors" title="Undo (Ctrl+Z)">
+                        <Undo2 size={18} />
+                    </button>
+                    <button onClick={onRedo} disabled={futureLength === 0} className="p-2.5 text-gray-400 hover:text-white hover:bg-white/10 rounded-xl disabled:opacity-30 transition-colors" title="Redo (Ctrl+Shift+Z)">
+                        <Redo2 size={18} />
+                    </button>
+                    <div className="h-6 w-px bg-[#2D313A] mx-1" />
+                    <button onClick={onOpenTemplates} className="p-2.5 text-gray-400 hover:text-white hover:bg-white/10 rounded-xl transition-colors" title="Templates">
+                        <LayoutTemplate size={18} />
+                    </button>
+                    <button onClick={onImport} className="p-2.5 text-gray-400 hover:text-white hover:bg-white/10 rounded-xl transition-colors" title="Import JSON">
+                        <Upload size={18} />
+                    </button>
+                    <button onClick={onExport} className="p-2.5 text-gray-400 hover:text-white hover:bg-white/10 rounded-xl transition-colors" title="Export Workspace">
+                        <Download size={18} />
+                    </button>
+                </div>
+
+                {/* User Profile Dropdown */}
+                <div ref={profileRef} className="pointer-events-auto relative">
+                    <button 
+                        onClick={() => setProfileOpen(!isProfileOpen)}
+                        className="bg-[#181B21]/90 backdrop-blur-xl border border-[#2D313A]/80 shadow-2xl rounded-2xl p-1.5 pl-2 flex items-center gap-2 hover:border-[#FF4F5E]/30 transition-all h-full"
+                    >
+                        <span className="text-xs font-medium text-white hidden lg:block max-w-[100px] truncate">{profile.name}</span>
+                        <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#FF4F5E] to-purple-600 overflow-hidden border border-white/10">
+                            {profile.avatar ? (
+                                <img src={profile.avatar} alt="Profile" className="w-full h-full object-cover" />
+                            ) : (
+                                <div className="w-full h-full flex items-center justify-center text-white font-bold text-xs">
+                                    {profile.name.charAt(0)}
+                                </div>
+                            )}
+                        </div>
+                    </button>
+
+                    {isProfileOpen && (
+                        <div className="absolute top-full right-0 mt-2 w-56 bg-[#181B21] border border-[#2D313A] rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 origin-top-right">
+                            <div className="p-3 border-b border-[#2D313A]">
+                                <p className="text-xs font-bold text-white">{profile.name}</p>
+                                <p className="text-[10px] text-gray-500 truncate">{profile.email || 'Set your email in settings'}</p>
+                            </div>
+                            <div className="p-1">
+                                <button onClick={openSettings} className="w-full text-left flex items-center gap-2 px-3 py-2 text-sm text-gray-300 hover:bg-white/5 hover:text-white rounded-lg transition-colors">
+                                    <User size={14} /> Profile
+                                </button>
+                                <button onClick={openSettings} className="w-full text-left flex items-center gap-2 px-3 py-2 text-sm text-gray-300 hover:bg-white/5 hover:text-white rounded-lg transition-colors">
+                                    <Settings size={14} /> Settings
+                                </button>
+                            </div>
+                            <div className="p-1 border-t border-[#2D313A]">
+                                <button className="w-full text-left flex items-center gap-2 px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 rounded-lg transition-colors">
+                                    <LogOut size={14} /> Log Out
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </>

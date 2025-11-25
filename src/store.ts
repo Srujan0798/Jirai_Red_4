@@ -46,6 +46,7 @@ interface AppState {
 
   undo: () => void;
   redo: () => void;
+  clearHistory: () => void;
   
   setViewMode: (mode: ViewMode) => void;
   setCalendarView: (view: CalendarView) => void;
@@ -69,8 +70,11 @@ interface AppState {
   toggleTaskStatus: (id: string) => void;
 }
 
-// Helper to generate safe unique IDs
-const generateId = () => {
+/**
+ * Helper to generate unique IDs for new entities.
+ * Falls back to Date+Random if crypto UUID is unavailable.
+ */
+const generateId = (): string => {
     if (typeof crypto !== 'undefined' && crypto.randomUUID) {
         return crypto.randomUUID();
     }
@@ -82,7 +86,14 @@ const createHistoryEntry = (nodes: BaseNode[], edges: BaseEdge[]): HistoryState 
   edges: JSON.parse(JSON.stringify(edges)) as BaseEdge[],
 });
 
-const withHistory = <T extends AppState>(fn: (state: T) => Partial<T>, set: (partial: Partial<T> | ((state: T) => Partial<T>)) => void, get: () => T) => {
+/**
+ * Higher-order function to wrap state updates with history tracking (Undo/Redo).
+ */
+const withHistory = <T extends AppState>(
+    fn: (state: T) => Partial<T>, 
+    set: (partial: Partial<T> | ((state: T) => Partial<T>)) => void, 
+    get: () => T
+) => {
   const currentState = get();
   const historyEntry = createHistoryEntry(currentState.nodes, currentState.edges);
   const newPast = [...currentState.past, historyEntry].slice(-LIMITS.MAX_HISTORY);
@@ -110,8 +121,14 @@ export const useStore = create<AppState>()(
         past: [],
         future: [],
 
+        /**
+         * Completely replaces the current graph.
+         */
         setGraph: (nodes, edges) => set({ nodes, edges, selectedNodeIds: [], past: [], future: [] }),
         
+        /**
+         * Resets the workspace to the initial tutorial state.
+         */
         resetWorkspace: () => {
             const { nodes, edges } = getInitialState();
             set({ nodes, edges, selectedNodeIds: [], editingNodeId: null, past: [], future: [] });
@@ -164,6 +181,7 @@ export const useStore = create<AppState>()(
               
               const finalNodes = nextNodes.filter(n => nextRfNodes.some(rn => rn.id === n.id));
 
+              // If nodes were removed, record history
               if (changes.some(c => c.type === 'remove')) {
                   if (state.nodes.length !== finalNodes.length) {
                        withHistory(() => ({ nodes: finalNodes, selectedNodeIds: [] }), set, get);
@@ -341,6 +359,8 @@ export const useStore = create<AppState>()(
               future: newFuture
             }));
         },
+
+        clearHistory: () => set({ past: [], future: [] }),
 
         selectNode: (id, multi = false) => set((state) => {
             if (multi) {

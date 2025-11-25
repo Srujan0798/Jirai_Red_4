@@ -5,6 +5,7 @@ import { useStore } from '../../store';
 import { generateAnalysisFromPrompt } from '../../services/geminiService';
 import { LoadingSpinner } from '../LoadingSpinner';
 import { Z_INDEX } from '../../constants';
+import { analytics } from '../../services/analytics';
 
 export function AssistantBar() {
   const [input, setInput] = useState('');
@@ -24,8 +25,16 @@ export function AssistantBar() {
       addNodes(newNodes);
       addEdges(newEdges);
       
+      // Track successful query
+      analytics.trackAIQuery(true);
+      
     } catch (error) {
       console.error('AI generation failed:', error);
+      // Track failed query
+      analytics.trackAIQuery(false);
+      if (error instanceof Error) {
+          analytics.trackError(error.message, 'assistant-bar');
+      }
     } finally {
       setIsProcessing(false);
       setInput('');

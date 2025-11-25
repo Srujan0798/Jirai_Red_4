@@ -10,20 +10,27 @@ import ReactFlow, {
   Panel,
   OnMove,
   ConnectionLineType,
-  ReactFlowProvider,
-  useReactFlow
+  useReactFlow,
+  OnConnectStart,
+  OnConnectEnd
 } from 'reactflow';
 import { useNodesStore } from '../stores/nodesStore';
+import { useUserStore } from '../stores/userStore';
 import { BaseNode } from '../types/node.types';
 import { CustomNode } from './nodes/CustomNode';
 import { CustomEdge } from './edges/CustomEdge';
 import { COLORS } from '../constants';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 import { useSmoothControls } from '../hooks/useSmoothControls';
+import { useVirtualNodes } from '../hooks/useVirtualNodes';
+import { useTouchGestures } from '../hooks/useTouchGestures';
 import { ShortcutHelp } from './ShortcutHelp';
 import { ContextMenu } from './ContextMenu';
+import { CommandPalette } from './CommandPalette';
+import { FloatingToolbar } from './FloatingToolbar';
 import { ContextMenuState } from '../types';
 import { isValidConnection } from '../utils/connectionValidation';
+import { analytics } from '../services/analytics';
 
 interface GraphEngineProps {
   viewMode: 'analysis' | 'management' | 'workflow';
@@ -42,7 +49,8 @@ const NODE_TYPES = {
   link: memo(CustomNode),
 };
 
-const GraphEngineInner: React.FC<GraphEngineProps> = memo(({ viewMode }) => {
+// Main Component
+export const GraphEngine: React.FC<GraphEngineProps> = memo(({ viewMode }) => {
   const { 
     nodes, 
     edges, 
@@ -53,15 +61,22 @@ const GraphEngineInner: React.FC<GraphEngineProps> = memo(({ viewMode }) => {
     clearSelection,
     setEditingNode,
     addNode,
+    addEdge
   } = useNodesStore();
 
+  const { preferences } = useUserStore();
+  const reduceMotion = preferences.reduceMotion;
+
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
-  const { project, fitView } = useReactFlow();
+  const connectingNodeId = useRef<string | null>(null);
+  const { screenToFlowPosition, fitView } = useReactFlow();
 
   // Hooks
   const { isHelpOpen, toggleHelp } = useKeyboardShortcuts();
   useSmoothControls(); 
   
+  const gesturesBind = useTouchGestures(reactFlowWrapper);
+
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
   const [transform, setTransform] = useState({ x: 0, y: 0, zoom: 1 });
   const [currentTimeX, setCurrentTimeX] = useState(0);
@@ -85,9 +100,10 @@ const GraphEngineInner: React.FC<GraphEngineProps> = memo(({ viewMode }) => {
 
   // Fit view optimization
   useEffect(() => {
-    const timer = setTimeout(() => fitView({ duration: 800, padding: 0.2 }), 100);
+    const duration = reduceMotion ? 0 : 800;
+    const timer = setTimeout(() => fitView({ duration, padding: 0.2 }), 100);
     return () => clearTimeout(timer);
-  }, [fitView, nodes.length === 3]); 
+  }, [fitView, nodes.length === 3, reduceMotion]); 
 
   // Timeline "Now" Marker
   useEffect(() => {
@@ -114,7 +130,9 @@ const GraphEngineInner: React.FC<GraphEngineProps> = memo(({ viewMode }) => {
     draggable: true, 
   })), [nodes, viewMode]);
 
-  // Use CustomEdge for Analysis mode, fallback to smoothstep for others
+  // --- VIRTUALIZATION ---
+  const visibleNodes = useVirtualNodes(rfNodes);
+
   const rfEdges: Edge[] = useMemo(() => edges.map(e => ({
     id: e.id,
     source: e.from,
@@ -154,9 +172,9 @@ const GraphEngineInner: React.FC<GraphEngineProps> = memo(({ viewMode }) => {
         top: event.clientY,
         left: event.clientX,
         type: 'pane',
-        data: project({ x: event.clientX, y: event.clientY })
+        data: screenToFlowPosition({ x: event.clientX, y: event.clientY })
     });
-  }, [project]);
+  }, [screenToFlowPosition]);
 
   const onNodeContextMenu = useCallback((event: React.MouseEvent, node: Node<BaseNode>) => {
     event.preventDefault();
@@ -168,6 +186,53 @@ const GraphEngineInner: React.FC<GraphEngineProps> = memo(({ viewMode }) => {
         data: node.data
     });
   }, []);
+
+  // Connect to Create Handlers
+  const onConnectStart: OnConnectStart = useCallback((_, { nodeId }) => {
+    connectingNodeId.current = nodeId;
+  }, []);
+
+  const onConnectEnd: OnConnectEnd = useCallback((event) => {
+    if (!connectingNodeId.current || !reactFlowWrapper.current) return;
+
+    const targetIsPane = (event.target as Element).classList.contains('react-flow__pane');
+
+    if (targetIsPane) {
+        const clientX = (event as MouseEvent).clientX || (event as TouchEvent).changedTouches?.[0]?.clientX;
+        const clientY = (event as MouseEvent).clientY || (event as TouchEvent).changedTouches?.[0]?.clientY;
+        
+        if (clientX && clientY) {
+             const position = screenToFlowPosition({
+                x: clientX,
+                y: clientY,
+            });
+
+            const newNode: BaseNode = {
+                id: `node-${Date.now()}`,
+                type: 'topic',
+                title: 'New Topic',
+                position,
+                visual: { shape: 'rounded-rect', sizeMultiplier: 1 },
+                status: 'todo'
+            };
+
+            addNode(newNode);
+            // TRACK ANALYTICS
+            analytics.trackNodeCreated('topic');
+            
+            addEdge({
+                id: `e-${Date.now()}`,
+                from: connectingNodeId.current,
+                to: newNode.id,
+                kind: 'solid',
+                style: 'solid',
+                weight: 2,
+                opacity: 1
+            });
+        }
+    }
+    connectingNodeId.current = null;
+  }, [screenToFlowPosition, addNode, addEdge]);
 
   const timelineHeaders = useMemo(() => {
       const dates = [];
@@ -185,7 +250,7 @@ const GraphEngineInner: React.FC<GraphEngineProps> = memo(({ viewMode }) => {
   const snapGrid: [number, number] = viewMode === 'workflow' ? [250, 50] : [20, 20];
 
   const handlePaneDoubleClick = useCallback((event: React.MouseEvent) => {
-      const position = project({ x: event.clientX, y: event.clientY });
+      const position = screenToFlowPosition({ x: event.clientX, y: event.clientY });
       addNode({
           id: `node-${Date.now()}`,
           type: 'topic',
@@ -194,13 +259,17 @@ const GraphEngineInner: React.FC<GraphEngineProps> = memo(({ viewMode }) => {
           visual: { shape: 'rounded-rect', sizeMultiplier: 1 },
           status: 'todo'
       });
-  }, [project, addNode]);
+      // TRACK ANALYTICS
+      analytics.trackNodeCreated('topic');
+  }, [screenToFlowPosition, addNode]);
 
   return (
     <>
     <ShortcutHelp isOpen={isHelpOpen} onClose={toggleHelp} />
+    <CommandPalette />
     <ContextMenu menu={contextMenu} onClose={() => setContextMenu(null)} />
-    <div className="w-full h-full bg-[#020408] relative overflow-hidden" ref={reactFlowWrapper}>
+    
+    <div className="w-full h-full bg-[#020408] relative overflow-hidden" ref={reactFlowWrapper} {...gesturesBind()}>
       
       {/* Vignette Effect */}
       <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_center,transparent_0%,rgba(2,4,8,0.6)_100%)] z-0" />
@@ -309,11 +378,13 @@ const GraphEngineInner: React.FC<GraphEngineProps> = memo(({ viewMode }) => {
       )}
 
       <ReactFlow
-        nodes={rfNodes}
+        nodes={visibleNodes}
         edges={rfEdges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
+        onConnectStart={onConnectStart}
+        onConnectEnd={onConnectEnd}
         onNodeClick={onNodeClick}
         onNodeDoubleClick={onNodeDoubleClick}
         onPaneClick={onPaneClick}
@@ -348,6 +419,8 @@ const GraphEngineInner: React.FC<GraphEngineProps> = memo(({ viewMode }) => {
             />
         )}
         
+        <FloatingToolbar />
+        
         <Panel position="bottom-right" className="mb-32 mr-4 pointer-events-none opacity-50">
              <div className="text-[10px] font-mono text-gray-600 border border-white/5 px-2 py-1 rounded-full bg-black/40 uppercase tracking-widest">
                  {viewMode === 'analysis' ? 'Mind Map' : viewMode === 'management' ? 'Timeline View' : 'Calendar Grid'}
@@ -373,11 +446,3 @@ const GraphEngineInner: React.FC<GraphEngineProps> = memo(({ viewMode }) => {
     </>
   );
 });
-
-export const GraphEngine: React.FC<GraphEngineProps> = (props) => {
-  return (
-    <ReactFlowProvider>
-      <GraphEngineInner {...props} />
-    </ReactFlowProvider>
-  );
-};

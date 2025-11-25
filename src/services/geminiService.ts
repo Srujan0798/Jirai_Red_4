@@ -1,6 +1,8 @@
+
 import { GoogleGenAI, Type } from "@google/genai";
 import { BaseNode, BaseEdge, ViewMode, LayoutPreference } from "../types";
 import { MODELS, LIMITS, COLORS, SIZES } from "../constants";
+import { getLayoutedElements } from "../utils/edgeBundling";
 
 // Initialize Gemini
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
@@ -224,6 +226,14 @@ export const reapplyLayout = (nodes: BaseNode[], edges: BaseEdge[], viewMode: Vi
     } else if (viewMode === 'workflow') {
         return applyCalendarLayout(newNodes);
     } else {
+        // ANALYSIS MODE: Support different algorithmic layouts
+        if (preference === 'HORIZONTAL') {
+            return getLayoutedElements(newNodes, edges, 'LR');
+        }
+        if (preference === 'VERTICAL') {
+            return getLayoutedElements(newNodes, edges, 'TB');
+        }
+        // Default to custom organic
         return applyOrganicLayout(newNodes, edges);
     }
 };
