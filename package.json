@@ -16,6 +16,8 @@
     "zustand": "^5.0.8",
     "date-fns": "^4.1.0",
     "reactflow": "^11.11.4",
+    "immer": "10.0.3",
+    "use-immer": "0.9.0",
     "html-to-image": "1.11.11",
     "file-saver": "2.0.5",
     "vitest": "^4.0.12",
