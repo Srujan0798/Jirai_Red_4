@@ -35,7 +35,7 @@ const nodeTypes = {
 function CanvasInner() {
   const { nodes, edges, updateNode, selectNode, clearSelection, addEdge: addStoreEdge, addNode } = useNodesStore();
   const { currentBoard, setViewport, setZoom } = useBoardStore();
-  const { project } = useReactFlow();
+  const { screenToFlowPosition, project } = useReactFlow();
   
   // Viewport state for syncing custom headers
   const [transform, setTransform] = useState({ x: 0, y: 0, zoom: 1 });
@@ -113,17 +113,14 @@ function CanvasInner() {
     const targetIsPane = (event.target as Element).classList.contains('react-flow__pane');
 
     if (targetIsPane) {
-        // Drop on canvas -> Create new node
-        const { top, left } = wrapperRef.current.getBoundingClientRect();
-        
         // Fallback for touch/mouse events
         const clientX = (event as MouseEvent).clientX || (event as TouchEvent).changedTouches?.[0]?.clientX;
         const clientY = (event as MouseEvent).clientY || (event as TouchEvent).changedTouches?.[0]?.clientY;
         
         if (clientX && clientY) {
-             const position = project({
-                x: clientX - left,
-                y: clientY - top,
+             const position = screenToFlowPosition({
+                x: clientX,
+                y: clientY,
             });
 
             const newNode: BaseNode = {
@@ -149,7 +146,7 @@ function CanvasInner() {
         }
     }
     connectingNodeId.current = null;
-  }, [project, addNode, addStoreEdge]);
+  }, [screenToFlowPosition, addNode, addStoreEdge]);
 
   // --- TIMELINE DATA ---
   const timelineDates = useMemo(() => {

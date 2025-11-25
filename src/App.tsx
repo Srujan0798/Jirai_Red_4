@@ -18,6 +18,7 @@ import { useMediaQuery } from './hooks/useMediaQuery';
 import { MobileHeader } from './components/MobileHeader';
 import { MobileMenu } from './components/MobileMenu';
 import { SearchBar } from './components/SearchBar';
+import { Toaster } from './components/ui/Toaster';
 
 function AppContent() {
   const { currentBoard, createBoard } = useBoardStore();
@@ -65,6 +66,13 @@ function AppContent() {
     }
   }, [currentBoard, createBoard, nodes.length, setGraph]);
 
+  // Listener for TopDynamicIsland settings trigger
+  useEffect(() => {
+      const handleOpenSettings = () => setShowSettings(true);
+      window.addEventListener('open-settings', handleOpenSettings);
+      return () => window.removeEventListener('open-settings', handleOpenSettings);
+  }, []);
+
   const handleOpenExport = () => {
     setDialogTab('export');
     setShowDialog(true);
@@ -80,6 +88,7 @@ function AppContent() {
   return (
     <div className="w-screen h-screen bg-[#0F1115] flex flex-col overflow-hidden relative font-sans text-[#E0E0E0]">
         
+        <Toaster /> {/* Global Notification System */}
         <OnboardingTutorial />
 
         <ExportImportDialog 

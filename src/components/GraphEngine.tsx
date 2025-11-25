@@ -10,7 +10,9 @@ import ReactFlow, {
   Panel,
   OnMove,
   ConnectionLineType,
-  useReactFlow
+  useReactFlow,
+  OnConnectStart,
+  OnConnectEnd
 } from 'reactflow';
 import { useNodesStore } from '../stores/nodesStore';
 import { BaseNode } from '../types/node.types';
@@ -57,10 +59,12 @@ export const GraphEngine: React.FC<GraphEngineProps> = memo(({ viewMode }) => {
     clearSelection,
     setEditingNode,
     addNode,
+    addEdge
   } = useNodesStore();
 
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
-  const { project, fitView } = useReactFlow();
+  const connectingNodeId = useRef<string | null>(null);
+  const { screenToFlowPosition, fitView } = useReactFlow();
 
   // Hooks
   const { isHelpOpen, toggleHelp } = useKeyboardShortcuts();
@@ -122,10 +126,8 @@ export const GraphEngine: React.FC<GraphEngineProps> = memo(({ viewMode }) => {
   })), [nodes, viewMode]);
 
   // --- VIRTUALIZATION ---
-  // Filter nodes based on viewport to improve performance
   const visibleNodes = useVirtualNodes(rfNodes);
 
-  // Use CustomEdge for Analysis mode, fallback to smoothstep for others
   const rfEdges: Edge[] = useMemo(() => edges.map(e => ({
     id: e.id,
     source: e.from,
@@ -165,9 +167,9 @@ export const GraphEngine: React.FC<GraphEngineProps> = memo(({ viewMode }) => {
         top: event.clientY,
         left: event.clientX,
         type: 'pane',
-        data: project({ x: event.clientX, y: event.clientY })
+        data: screenToFlowPosition({ x: event.clientX, y: event.clientY })
     });
-  }, [project]);
+  }, [screenToFlowPosition]);
 
   const onNodeContextMenu = useCallback((event: React.MouseEvent, node: Node<BaseNode>) => {
     event.preventDefault();
@@ -179,6 +181,51 @@ export const GraphEngine: React.FC<GraphEngineProps> = memo(({ viewMode }) => {
         data: node.data
     });
   }, []);
+
+  // Connect to Create Handlers
+  const onConnectStart: OnConnectStart = useCallback((_, { nodeId }) => {
+    connectingNodeId.current = nodeId;
+  }, []);
+
+  const onConnectEnd: OnConnectEnd = useCallback((event) => {
+    if (!connectingNodeId.current || !reactFlowWrapper.current) return;
+
+    const targetIsPane = (event.target as Element).classList.contains('react-flow__pane');
+
+    if (targetIsPane) {
+        const clientX = (event as MouseEvent).clientX || (event as TouchEvent).changedTouches?.[0]?.clientX;
+        const clientY = (event as MouseEvent).clientY || (event as TouchEvent).changedTouches?.[0]?.clientY;
+        
+        if (clientX && clientY) {
+             const position = screenToFlowPosition({
+                x: clientX,
+                y: clientY,
+            });
+
+            const newNode: BaseNode = {
+                id: `node-${Date.now()}`,
+                type: 'topic',
+                title: 'New Topic',
+                position,
+                visual: { shape: 'rounded-rect', sizeMultiplier: 1 },
+                status: 'todo'
+            };
+
+            addNode(newNode);
+            
+            addEdge({
+                id: `e-${Date.now()}`,
+                from: connectingNodeId.current,
+                to: newNode.id,
+                kind: 'solid',
+                style: 'solid',
+                weight: 2,
+                opacity: 1
+            });
+        }
+    }
+    connectingNodeId.current = null;
+  }, [screenToFlowPosition, addNode, addEdge]);
 
   const timelineHeaders = useMemo(() => {
       const dates = [];
@@ -196,7 +243,7 @@ export const GraphEngine: React.FC<GraphEngineProps> = memo(({ viewMode }) => {
   const snapGrid: [number, number] = viewMode === 'workflow' ? [250, 50] : [20, 20];
 
   const handlePaneDoubleClick = useCallback((event: React.MouseEvent) => {
-      const position = project({ x: event.clientX, y: event.clientY });
+      const position = screenToFlowPosition({ x: event.clientX, y: event.clientY });
       addNode({
           id: `node-${Date.now()}`,
           type: 'topic',
@@ -205,7 +252,7 @@ export const GraphEngine: React.FC<GraphEngineProps> = memo(({ viewMode }) => {
           visual: { shape: 'rounded-rect', sizeMultiplier: 1 },
           status: 'todo'
       });
-  }, [project, addNode]);
+  }, [screenToFlowPosition, addNode]);
 
   return (
     <>
@@ -327,6 +374,8 @@ export const GraphEngine: React.FC<GraphEngineProps> = memo(({ viewMode }) => {
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
+        onConnectStart={onConnectStart}
+        onConnectEnd={onConnectEnd}
         onNodeClick={onNodeClick}
         onNodeDoubleClick={onNodeDoubleClick}
         onPaneClick={onPaneClick}
