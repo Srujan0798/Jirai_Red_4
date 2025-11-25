@@ -30,7 +30,6 @@ import { CommandPalette } from './CommandPalette';
 import { FloatingToolbar } from './FloatingToolbar';
 import { ContextMenuState } from '../types';
 import { isValidConnection } from '../utils/connectionValidation';
-import { analytics } from '../services/analytics';
 
 interface GraphEngineProps {
   viewMode: 'analysis' | 'management' | 'workflow';
@@ -49,7 +48,7 @@ const NODE_TYPES = {
   link: memo(CustomNode),
 };
 
-// Main Component
+// Main Component (No inner wrapper needed as Provider is in App)
 export const GraphEngine: React.FC<GraphEngineProps> = memo(({ viewMode }) => {
   const { 
     nodes, 
@@ -75,6 +74,7 @@ export const GraphEngine: React.FC<GraphEngineProps> = memo(({ viewMode }) => {
   const { isHelpOpen, toggleHelp } = useKeyboardShortcuts();
   useSmoothControls(); 
   
+  // Phase 9: Touch Gestures
   const gesturesBind = useTouchGestures(reactFlowWrapper);
 
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
@@ -217,8 +217,6 @@ export const GraphEngine: React.FC<GraphEngineProps> = memo(({ viewMode }) => {
             };
 
             addNode(newNode);
-            // TRACK ANALYTICS
-            analytics.trackNodeCreated('topic');
             
             addEdge({
                 id: `e-${Date.now()}`,
@@ -259,8 +257,6 @@ export const GraphEngine: React.FC<GraphEngineProps> = memo(({ viewMode }) => {
           visual: { shape: 'rounded-rect', sizeMultiplier: 1 },
           status: 'todo'
       });
-      // TRACK ANALYTICS
-      analytics.trackNodeCreated('topic');
   }, [screenToFlowPosition, addNode]);
 
   return (
