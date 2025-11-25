@@ -2,6 +2,7 @@
 import { toPng } from 'html-to-image';
 import { BaseNode, BaseEdge } from '../types';
 import { downloadFile } from './fileHelpers';
+import { serializeToTOON } from './toon';
 
 export const exportToJSON = (nodes: BaseNode[], edges: BaseEdge[], selectedIds: string[] = []) => {
   const nodesToExport = selectedIds.length > 0 ? nodes.filter(n => selectedIds.includes(n.id)) : nodes;
@@ -19,6 +20,12 @@ export const exportToJSON = (nodes: BaseNode[], edges: BaseEdge[], selectedIds: 
   const filename = `jirai-workspace-${new Date().toISOString().split('T')[0]}.json`;
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   downloadFile(blob, filename);
+};
+
+export const exportToTOON = (nodes: BaseNode[], edges: BaseEdge[]) => {
+  const toon = serializeToTOON(nodes, edges);
+  const filename = `jirai-workspace-${new Date().toISOString().split('T')[0]}.toon`;
+  downloadFile(new Blob([toon], { type: 'text/plain' }), filename);
 };
 
 export const exportToPNG = async (element: HTMLElement | null, filename: string = `jirai-canvas-${new Date().toISOString().split('T')[0]}.png`) => {

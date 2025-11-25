@@ -1,9 +1,9 @@
 
 import React, { useState, useRef } from 'react';
-import { X, Download, Upload, FileJson, Image, FileText, Check, AlertCircle } from 'lucide-react';
+import { X, Download, Upload, FileJson, Image, FileText, Check, AlertCircle, FileCode2 } from 'lucide-react';
 import { useStore } from '../store';
-import { exportToJSON, exportToPNG, exportToMarkdown } from '../utils/export';
-import { importFromJSON } from '../utils/import';
+import { exportToJSON, exportToPNG, exportToMarkdown, exportToTOON } from '../utils/export';
+import { importWorkspace } from '../utils/import';
 
 interface ExportImportDialogProps {
   isOpen: boolean;
@@ -21,7 +21,7 @@ export const ExportImportDialog: React.FC<ExportImportDialogProps> = ({ isOpen, 
 
   if (!isOpen) return null;
 
-  const handleExport = async (type: 'json' | 'png' | 'md') => {
+  const handleExport = async (type: 'json' | 'png' | 'md' | 'toon') => {
     setIsProcessing(true);
     try {
       if (type === 'json') {
@@ -31,6 +31,8 @@ export const ExportImportDialog: React.FC<ExportImportDialogProps> = ({ isOpen, 
         await exportToPNG(canvas);
       } else if (type === 'md') {
         exportToMarkdown(nodes);
+      } else if (type === 'toon') {
+        exportToTOON(nodes, edges);
       }
       setSuccess('Export successful!');
       setTimeout(() => setSuccess(null), 3000);
@@ -50,7 +52,7 @@ export const ExportImportDialog: React.FC<ExportImportDialogProps> = ({ isOpen, 
     setSuccess(null);
 
     try {
-      const result = await importFromJSON(file);
+      const result = await importWorkspace(file);
       // Simple replace strategy for now
       if (confirm('This will replace your current workspace. Continue?')) {
         setGraph(result.nodes, result.edges);
@@ -108,7 +110,12 @@ export const ExportImportDialog: React.FC<ExportImportDialogProps> = ({ isOpen, 
                
                <button onClick={() => handleExport('json')} className="w-full flex items-center gap-3 p-3 bg-[#0F1115] hover:bg-[#2D313A] border border-[#2D313A] rounded-xl transition-all group">
                  <div className="p-2 bg-blue-500/10 text-blue-400 rounded group-hover:bg-blue-500 group-hover:text-white"><FileJson size={20} /></div>
-                 <div className="text-left"><div className="text-sm font-medium text-white">JSON Data</div><div className="text-[10px] text-gray-500">Full backup</div></div>
+                 <div className="text-left"><div className="text-sm font-medium text-white">JSON Data</div><div className="text-[10px] text-gray-500">Full backup (Standard)</div></div>
+               </button>
+
+               <button onClick={() => handleExport('toon')} className="w-full flex items-center gap-3 p-3 bg-[#0F1115] hover:bg-[#2D313A] border border-[#2D313A] rounded-xl transition-all group">
+                 <div className="p-2 bg-emerald-500/10 text-emerald-400 rounded group-hover:bg-emerald-500 group-hover:text-white"><FileCode2 size={20} /></div>
+                 <div className="text-left"><div className="text-sm font-medium text-white">TOON Format</div><div className="text-[10px] text-gray-500">AI-Optimized & Compact</div></div>
                </button>
 
                <button onClick={() => handleExport('png')} className="w-full flex items-center gap-3 p-3 bg-[#0F1115] hover:bg-[#2D313A] border border-[#2D313A] rounded-xl transition-all group">
@@ -130,10 +137,10 @@ export const ExportImportDialog: React.FC<ExportImportDialogProps> = ({ isOpen, 
                 <div className="w-12 h-12 bg-[#2D313A] rounded-full flex items-center justify-center mx-auto mb-3 text-gray-400 group-hover:text-[#FF4F5E] transition-colors">
                   <Upload size={24} />
                 </div>
-                <p className="text-sm font-medium text-white">Click to Upload JSON</p>
-                <p className="text-xs text-gray-500 mt-1">Supports Jirai Workspace files</p>
+                <p className="text-sm font-medium text-white">Click to Upload</p>
+                <p className="text-xs text-gray-500 mt-1">Supports JSON & TOON files</p>
               </div>
-              <input ref={fileInputRef} type="file" accept=".json" className="hidden" onChange={handleImport} />
+              <input ref={fileInputRef} type="file" accept=".json,.toon" className="hidden" onChange={handleImport} />
             </div>
           )}
         </div>

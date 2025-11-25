@@ -10,24 +10,29 @@ import ReactFlow, {
   Panel,
   OnMove,
   ConnectionLineType,
-  ReactFlowProvider,
   useReactFlow
 } from 'reactflow';
 import { useNodesStore } from '../stores/nodesStore';
 import { BaseNode } from '../types/node.types';
 import { CustomNode } from './nodes/CustomNode';
+import { CustomEdge } from './edges/CustomEdge';
 import { COLORS } from '../constants';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 import { useSmoothControls } from '../hooks/useSmoothControls';
+import { useVirtualNodes } from '../hooks/useVirtualNodes';
+import { useTouchGestures } from '../hooks/useTouchGestures';
 import { ShortcutHelp } from './ShortcutHelp';
 import { ContextMenu } from './ContextMenu';
+import { CommandPalette } from './CommandPalette';
+import { FloatingToolbar } from './FloatingToolbar';
 import { ContextMenuState } from '../types';
+import { isValidConnection } from '../utils/connectionValidation';
 
 interface GraphEngineProps {
   viewMode: 'analysis' | 'management' | 'workflow';
 }
 
-// Memoized Node Types to prevent re-creation on render
+// Memoized Node Types
 const NODE_TYPES = {
   root: memo(CustomNode),
   topic: memo(CustomNode),
@@ -40,7 +45,8 @@ const NODE_TYPES = {
   link: memo(CustomNode),
 };
 
-const GraphEngineInner: React.FC<GraphEngineProps> = memo(({ viewMode }) => {
+// Main Component (No inner wrapper needed as Provider is in App)
+export const GraphEngine: React.FC<GraphEngineProps> = memo(({ viewMode }) => {
   const { 
     nodes, 
     edges, 
@@ -58,11 +64,19 @@ const GraphEngineInner: React.FC<GraphEngineProps> = memo(({ viewMode }) => {
 
   // Hooks
   const { isHelpOpen, toggleHelp } = useKeyboardShortcuts();
-  useSmoothControls(); // Smooth keyboard navigation
+  useSmoothControls(); 
   
+  // Phase 9: Touch Gestures
+  const gesturesBind = useTouchGestures(reactFlowWrapper);
+
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
   const [transform, setTransform] = useState({ x: 0, y: 0, zoom: 1 });
   const [currentTimeX, setCurrentTimeX] = useState(0);
+
+  // Edge Types Registration
+  const edgeTypes = useMemo(() => ({
+    custom: CustomEdge,
+  }), []);
 
   // Performance: Memoize edge options
   const connectionLineStyle = useMemo(() => ({ 
@@ -102,12 +116,16 @@ const GraphEngineInner: React.FC<GraphEngineProps> = memo(({ viewMode }) => {
     type: n.type,
     position: n.position,
     data: n,
-    // Use nullish coalescing to ensure 0 is handled if needed, though width usually > 0
     width: n.visual.width ?? (viewMode === 'management' ? 280 : viewMode === 'workflow' ? 230 : (n.type === 'root' ? 180 : 160)),
     height: n.visual.height ?? (viewMode === 'management' ? 100 : viewMode === 'workflow' ? 60 : (n.type === 'root' ? 180 : 100)),
     draggable: true, 
   })), [nodes, viewMode]);
 
+  // --- VIRTUALIZATION ---
+  // Filter nodes based on viewport to improve performance
+  const visibleNodes = useVirtualNodes(rfNodes);
+
+  // Use CustomEdge for Analysis mode, fallback to smoothstep for others
   const rfEdges: Edge[] = useMemo(() => edges.map(e => ({
     id: e.id,
     source: e.from,
@@ -117,9 +135,9 @@ const GraphEngineInner: React.FC<GraphEngineProps> = memo(({ viewMode }) => {
         stroke: e.color || (e.kind === 'next' ? COLORS.JIRAI_SECONDARY : '#2D313A'), 
         strokeWidth: Math.max(1.5, e.weight || 1.5),
         strokeDasharray: e.style === 'dashed' ? '5,5' : undefined,
-        opacity: viewMode === 'analysis' ? 0.4 : 0.2 
+        opacity: viewMode === 'analysis' ? 0.6 : 0.3
     },
-    type: viewMode === 'analysis' ? 'default' : 'smoothstep'
+    type: viewMode === 'analysis' ? 'custom' : 'smoothstep'
   })), [edges, viewMode]);
 
   const onNodeClick = useCallback((_: React.MouseEvent, node: Node) => {
@@ -192,8 +210,10 @@ const GraphEngineInner: React.FC<GraphEngineProps> = memo(({ viewMode }) => {
   return (
     <>
     <ShortcutHelp isOpen={isHelpOpen} onClose={toggleHelp} />
+    <CommandPalette />
     <ContextMenu menu={contextMenu} onClose={() => setContextMenu(null)} />
-    <div className="w-full h-full bg-[#020408] relative overflow-hidden" ref={reactFlowWrapper}>
+    
+    <div className="w-full h-full bg-[#020408] relative overflow-hidden" ref={reactFlowWrapper} {...gesturesBind()}>
       
       {/* Vignette Effect */}
       <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_center,transparent_0%,rgba(2,4,8,0.6)_100%)] z-0" />
@@ -302,7 +322,7 @@ const GraphEngineInner: React.FC<GraphEngineProps> = memo(({ viewMode }) => {
       )}
 
       <ReactFlow
-        nodes={rfNodes}
+        nodes={visibleNodes}
         edges={rfEdges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
@@ -315,6 +335,8 @@ const GraphEngineInner: React.FC<GraphEngineProps> = memo(({ viewMode }) => {
         onDoubleClick={handlePaneDoubleClick}
         onMove={onMove}
         nodeTypes={NODE_TYPES}
+        edgeTypes={edgeTypes}
+        isValidConnection={(conn) => isValidConnection(conn, rfEdges)}
         minZoom={0.1}
         maxZoom={4}
         snapToGrid={snapToGrid}
@@ -338,6 +360,8 @@ const GraphEngineInner: React.FC<GraphEngineProps> = memo(({ viewMode }) => {
                 className="opacity-10"
             />
         )}
+        
+        <FloatingToolbar />
         
         <Panel position="bottom-right" className="mb-32 mr-4 pointer-events-none opacity-50">
              <div className="text-[10px] font-mono text-gray-600 border border-white/5 px-2 py-1 rounded-full bg-black/40 uppercase tracking-widest">
@@ -364,11 +388,3 @@ const GraphEngineInner: React.FC<GraphEngineProps> = memo(({ viewMode }) => {
     </>
   );
 });
-
-export const GraphEngine: React.FC<GraphEngineProps> = (props) => {
-  return (
-    <ReactFlowProvider>
-      <GraphEngineInner {...props} />
-    </ReactFlowProvider>
-  );
-};

@@ -1,6 +1,7 @@
 
 import { BaseNode, BaseEdge } from '../types';
 import { readFile } from './fileHelpers';
+import { parseFromTOON } from './toon';
 
 export interface ImportResult {
   nodes: BaseNode[];
@@ -13,8 +14,21 @@ export const validateWorkspaceJSON = (data: any): boolean => {
   return true;
 };
 
-export const importFromJSON = async (file: File): Promise<ImportResult> => {
+export const importWorkspace = async (file: File): Promise<ImportResult> => {
   const content = await readFile(file);
+  
+  // Strategy: Check file extension or sniff content
+  const isTOON = file.name.endsWith('.toon') || content.startsWith('# TOON');
+
+  if (isTOON) {
+      try {
+          return parseFromTOON(content);
+      } catch (e) {
+          throw new Error('Invalid TOON file format');
+      }
+  }
+
+  // Default to JSON
   let data;
   try {
     data = JSON.parse(content);
@@ -31,3 +45,6 @@ export const importFromJSON = async (file: File): Promise<ImportResult> => {
     edges: data.edges
   };
 };
+
+// Legacy export for backward compatibility if needed, though we prefer importWorkspace
+export const importFromJSON = importWorkspace;
